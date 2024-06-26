@@ -1,5 +1,6 @@
-#include <Wire.h> 
+#include <Wire.h>
 #include <LiquidCrystal_I2C.h>
+#include <SimpleDHT.h>
 
 int pinDHT11 = 5;
 SimpleDHT11 dht11(pinDHT11);
@@ -7,23 +8,36 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 void setup() {
   Serial.begin(115200);
+  lcd.begin();
+  lcd.backlight();
 }
 
 void loop() {
-
   byte temperature = 0;
   byte humidity = 0;
-  int err = SimpleDHTErrSuccess;
-  if ((err = dht11.read(&temperature, &humidity, NULL)) != SimpleDHTErrSuccess) {
+  int err = dht11.read(&temperature, &humidity, NULL);
+  if (err != SimpleDHTErrSuccess) {
+    Serial.print("Read DHT11 failed, err="); 
+    Serial.println(err);
+    delay(2000);
     return;
   }
 
-    lcd.begin();
- 
-  lcd.backlight();
-  lcd.print("Climates: "); lcd.print((int)(temperature * 1.8 + 29)); lcd.print((char)223); lcd.print("F");
+  // Convert temperature to Fahrenheit
+  float temperatureF = temperature * 1.8 + 32;
+
+  // Display temperature and humidity on the LCD
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Climates: ");
+  lcd.print(temperatureF, 1); // Display with 1 decimal place
+  lcd.print((char)223); // Degree symbol
+  lcd.print("F");
+
   lcd.setCursor(0, 1);
   lcd.print("Moisture: ");
-  lcd.print((int)humidity); lcd.print("%");
-  delay(1000);
+  lcd.print(humidity);
+  lcd.print("%");
+
+  delay(2000); // Delay for 2 seconds before the next reading
 }
